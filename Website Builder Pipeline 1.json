@@ -1,0 +1,849 @@
+{
+  "name": "Website Builder Pipeline 1",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1312,
+        64
+      ],
+      "id": "62c2ecfd-3656-4d10-a2de-26d7ffd58c4a",
+      "name": "When chat message received",
+      "webhookId": "e6576307-1bde-4a67-a5b9-f6de97b4e2e8"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Intake Agent of a dynamic AI website generation system.\n\nYour ONLY job is to understand the CURRENT USER REQUEST and convert it into structured website requirements.\n\nIMPORTANT RULES:\n\n1. NEVER assume the website is a bakery.\n2. NEVER assume the website is a gaming website.\n3. NEVER assume any specific business, industry, theme, or website type.\n4. NEVER use GameZone, Test Bakery, Vogue Threads, or any previous example unless the CURRENT USER explicitly requests it.\n5. NEVER reuse information from previous executions, messages, workflows, examples, or conversations.\n6. Every execution must be completely independent.\n7. Use ONLY the information contained in the CURRENT USER REQUEST.\n8. Extract the website/project/business name directly from the CURRENT USER REQUEST.\n9. Identify the website type directly from the CURRENT USER REQUEST.\n10. Identify the business/project description from the CURRENT USER REQUEST.\n11. Identify the target audience only if it is mentioned or clearly stated in the CURRENT USER REQUEST.\n12. Extract all requested pages from the CURRENT USER REQUEST.\n13. Extract all requested features and functionality from the CURRENT USER REQUEST.\n14. Extract the requested visual style from the CURRENT USER REQUEST.\n15. Extract the requested colors or color preferences from the CURRENT USER REQUEST.\n16. Extract any additional requirements into special_requirements.\n17. Do NOT invent, assume, or add information that is not present in the CURRENT USER REQUEST.\n18. If a value is not mentioned, return an empty string \"\".\n19. If pages or features are not mentioned, return an empty array [].\n20. Keep the user's original meaning and requirements.\n21. Do not generate website content, HTML, CSS, code, or implementation details.\n22. Your output must contain ONLY the JSON object.\n23. Do NOT wrap the JSON inside a string.\n24. Do NOT use Markdown code fences such as ```json.\n25. Do NOT add explanations, comments, greetings, or any text before or after the JSON.\n26. Return syntactically valid JSON with double quotes around all keys and string values.\n\"contact_details\": {\n  \"phone\": \"exact value from user message, omit key if not mentioned\",\n  \"email\": \"exact value from user message, omit key if not mentioned\",\n  \"address\": \"exact value from user message, omit key if not mentioned\",\n  \"hours\": \"exact value from user message, omit key if not mentioned\"\n}\nCONTACT DETAILS RULE:\nIf the user's message includes a phone number, email address, physical address/location, or business hours, extract them EXACTLY as written (do not paraphrase, summarize, or reformat them) and place them in the \"contact_details\" object. Do NOT fold them into \"special_requirements\" as a sentence — they must be preserved as literal, structured data so downstream steps can use the real values. If no contact details are mentioned, omit \"contact_details\" entirely.\n\nCURRENT USER REQUEST:\n{{ $json.chatInput || $json.text || $json.message }}\n\nReturn ONLY valid JSON in exactly this structure:\n\n{\n  \"website_name\": \"\",\n  \"website_type\": \"\",\n  \"description\": \"\",\n  \"target_audience\": \"\",\n  \"pages\": [],\n  \"features\": [],\n  \"style\": \"\",\n  \"color_preferences\": \"\",\n  \"special_requirements\": \"\"\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -1088,
+        64
+      ],
+      "id": "0c363392-d4cd-4440-896e-76b5985647fa",
+      "name": "Intake Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Spec Writer Agent for an AI Website Builder.\n\nYour job is to convert the Intake Agent information into a clean website specification.\n\nIMPORTANT:\n- Use the information from Intake Agent.\n- Preserve the actual website/business name.\n- Preserve the actual website/business type.\n- Preserve the description.\n- Preserve the target audience.\n- Preserve requested pages.\n- Preserve requested features.\n- Preserve style preferences.\n- Preserve color preferences.\n- Preserve special requirements.\n- Do NOT ask questions.\n- Do NOT invent a business name when one is provided.\n- Do NOT replace missing information with \"Unknown Business\" unless it is genuinely unavailable.\n- Return ONLY valid JSON.\n- Do NOT return Markdown.\n- Do NOT return explanations.\n\nINTAKE DATA:\n{{ $('Intake Agent').item.json.text }}\n\nReturn this exact structure:\n\n{\n  \"businessName\": \"\",\n  \"businessType\": \"\",\n  \"description\": \"\",\n  \"targetAudience\": \"\",\n  \"pages\": [],\n  \"features\": [],\n  \"style\": \"\",\n  \"colorPreferences\": \"\",\n  \"specialRequirements\": \"\",\n  \"requestedSections\": null,\n  \"sections\": [],\n  \"nav_anchors\": []\n}\n\nRULES:\n\n1. businessName\nCopy website_name from the Intake Agent.\n\n2. businessType\nCopy website_type from the Intake Agent.\n\n3. description\nCopy description from the Intake Agent.\n\n4. targetAudience\nCopy target_audience from the Intake Agent.\n\n5. pages\nCopy the pages from the Intake Agent.\nIf empty, use [\"single-page\"].\n\n6. features\nCopy the requested features.\n\n7. style\nCopy the style preference.\n\n8. colorPreferences\nCopy the color preferences.\n\n9. specialRequirements\nCopy the special requirements.\n\n10. requestedSections\nIf the user requested a specific number of sections, return that number.\nOtherwise return null.\n\n11. sections\nDo not generate the UI sections here.\nReturn an empty array unless sections were explicitly provided by the user.\n\n12. nav_anchors\nReturn an empty array unless navigation anchors were explicitly provided.\n\nThe UI Planner Agent will later decide:\n- website template\n- section count\n- section order\n- layouts\n- visual structure\n\nReturn ONLY the JSON object.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -736,
+        64
+      ],
+      "id": "7344a7e4-cbc9-4cc8-9c34-2cc2b6c34dca",
+      "name": "Spec Writer Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert UI/UX Website Planning Agent responsible for creating a complete visual and structural plan for a website based entirely on the user's requirements.\n\nYour job is ONLY to plan the website UI structure. Do not generate HTML, CSS, JavaScript, React code, or actual website content. Your output will be passed to a Content Writer Agent, Image Keyword Agent, and Website Code Generator.\n\n## PRIMARY OBJECTIVE\n\nAnalyze the user's complete website/application requirement and create a professional website structure containing EXACTLY 20 slides/sections.\n\nEvery generated website MUST contain exactly 20 sections.\n\nNever return fewer than 20 sections.\nNever return more than 20 sections.\n\nThe website should feel like a professionally designed modern website, not a collection of random sections.\n\n## STEP 1 — UNDERSTAND THE USER REQUIREMENT\n\nAnalyze:\n\n* Business/company/project name\n* Website purpose\n* Target audience\n* Industry\n* Products/services\n* Features\n* User goals\n* Brand personality\n* Design preferences\n* Colors if provided\n* Contact information if provided\n* Location if provided\n* Pricing information if provided\n* Images/media requirements\n* Special requirements\n* Pages or sections explicitly requested by the user\n\nIMPORTANT:\n\nNever invent factual business information.\n\nIf the user provides a phone number, email, address, price, social-media URL, product name, service name, statistic, opening hours, or other factual information, preserve it exactly.\n\nIf information is not provided, mark the content requirement as \"not provided\" rather than inventing facts.\n\nCreative marketing concepts may be planned, but factual claims must never be fabricated.\n\n## STEP 2 — SELECT THE BEST WEBSITE TEMPLATE\n\nChoose ONE primary template based on the user's business or website purpose.\n\nAvailable templates:\n\n1. CORPORATE\n2. SAAS\n3. ECOMMERCE\n4. RESTAURANT\n5. FITNESS\n6. PORTFOLIO\n7. EDUCATION\n8. REAL ESTATE\n9. TRAVEL\n10. HEALTHCARE\n11. EVENT\n12. AGENCY\n13. TECHNOLOGY\n14. BEAUTY\n15. NONPROFIT\n\nTe\nThe website must NOT use a generic fixed template.\n\nFirst analyze the user's requirement and identify the business/website type.\n\nSelect the most appropriate template based on the actual requirement.\n\nGenerate exactly 20 sections specifically designed for that business type.\n\nDo not reuse the same section titles, section order, layout patterns, or design style for every website.\n\nThe content structure must be relevant to the business.\n\nExamples:\nGym → fitness programs, trainers, workouts, transformations, membership.\nBakery → products, cakes, pastries, baking process, custom orders.\nEcommerce → categories, products, offers, shopping experience, checkout.\nSaaS → features, integrations, workflow, pricing, use cases.\nPortfolio → projects, skills, experience, services, testimonials.\n\nThe user's business requirement has higher priority than any default template.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -384,
+        64
+      ],
+      "id": "610426c6-6582-41c6-ba6f-0063dc8405fb",
+      "name": "UI Planner Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional website content writer.\n\nYour job is to create unique, business-specific content for every section\nprovided by the UI Planner.\n\nIMPORTANT RULES:\n\n1. Read the complete user requirement before writing content.\n2. Understand the business type, business name, audience, services,\n   products and purpose.\n3. Use the UI Planner's section structure.\n4. Generate content specifically for that business.\n5. NEVER use generic titles such as:\n   \"Welcome to Our Business\"\n   \"Our Services\"\n   \"Why Choose Us\"\n   \"Our Story\"\n   unless they genuinely fit the requirement.\n6. Do not copy the same content between different websites.\n7. Every section must have a meaningful title related to its purpose.\n8. CTA text must match the business.\n9. Do not invent real-world facts, prices, reviews, addresses,\n   certifications or statistics.\n10. If information is not provided, use safe descriptive copy instead\n    of pretending it is a real fact.\n11. Generate content for exactly 20 sections.\n12. Keep each section concise enough for a real website.\n13. Content must be suitable for responsive HTML/CSS/JavaScript generation.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8a404c4e-3dd8-414a-bfbc-6e061c009483",
+      "name": "Content Writer Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert website image-search keyword generator.\n\nYour job is to analyze the user's website requirement AND the generated\ncontent from the Content Writer Agent, then create highly relevant image\nsearch keywords for each website section.\n\nIMPORTANT RULES:\n\n1. Read the actual section title and section content before generating\n   an image keyword.\n\n2. The image must visually represent the content of that specific section.\n\n3. NEVER generate generic keywords such as:\n   \"business\"\n   \"professional\"\n   \"modern website\"\n   \"company\"\n   \"people\"\n   \"office\"\n   unless the section actually requires them.\n\n4. Include the business context in the keyword.\n\n5. Generate 1–3 highly specific image keywords per section.\n\n6. Keywords should describe:\n   - subject\n   - activity\n   - environment\n   - visual style when useful\n\n7. Different sections must have different image concepts.\n\n8. Do not reuse the same image keyword across multiple sections unless\n   absolutely necessary.\n\n9. Do not generate images for sections that genuinely do not need an image,\n   such as a simple FAQ or contact form.\n\n10. Never use local image paths.\n\n11. The keywords must be suitable for image APIs or stock-image searches.\n\nEXAMPLE:\n\nWebsite type: Fitness / Gym\n\nSection:\n\"Strength Training\"\n\nContent:\n\"Build muscle and improve your strength with guided weight-training\nprograms.\"\n\nGOOD KEYWORDS:\n\"strength training gym weightlifting\"\n\"personal trainer helping client with weight training\"\n\"modern gym strength equipment\"\n\nBAD KEYWORDS:\n\"business\"\n\"professional\"\n\"modern website\"\n\nAnother example:\n\nSection:\n\"Yoga & Recovery\"\n\nContent:\n\"Improve flexibility and recovery through guided yoga sessions.\"\n\nGOOD:\n\"yoga class modern fitness studio\"\n\"people practicing yoga in gym\"\n\"fitness recovery stretching session\"\n\nBAD:\n\"gym\"\n\"fitness\"\n\"people\"\n\nReturn ONLY valid JSON in this format:\n\n{\n  \"imageKeywords\": {\n    \"hero\": [\"specific keyword\"],\n    \"about\": [\"specific keyword\"],\n    \"programs\": [\"specific keyword\"],\n    \"trainers\": [\"specific keyword\"],\n    \"gallery\": [\"specific keyword\"]\n  }\n}\n\nUse the actual section IDs provided by the UI Planner.\nDo not invent section IDs.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        544,
+        64
+      ],
+      "id": "1be75cab-5c91-4eeb-959b-4c9ea055f1ce",
+      "name": "Image Keyword Agent"
+    },
+    {
+      "parameters": {
+        "url": "=   https://api.pexels.com/v1/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=  {{ $json.keyword }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        64
+      ],
+      "id": "fc9615b8-d941-44c8-9c71-3b1eab0b374a",
+      "name": "Fetch Images",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\n// Get image keyword data\nlet data =\n  input.imageKeywords ??\n  input.image_keywords ??\n  input.keywords ??\n  input;\n\n// If data is a string, parse it\nif (typeof data === 'string') {\n  data = data\n    .replace(/^```json\\s*/i, '')\n    .replace(/^```\\s*/i, '')\n    .replace(/```$/i, '')\n    .trim();\n\n  try {\n    data = JSON.parse(data);\n  } catch (error) {\n    throw new Error(\n      'Image keyword data is not valid JSON: ' + error.message\n    );\n  }\n}\n\n// Sometimes the AI returns:\n// { \"imageKeywords\": { ... } }\nif (\n  data &&\n  typeof data === 'object' &&\n  data.imageKeywords &&\n  typeof data.imageKeywords === 'object'\n) {\n  data = data.imageKeywords;\n}\n\n// Sometimes it returns:\n// { \"keywords\": { ... } }\nif (\n  data &&\n  typeof data === 'object' &&\n  data.keywords &&\n  typeof data.keywords === 'object' &&\n  !Array.isArray(data.keywords)\n) {\n  data = data.keywords;\n}\n\n// Validate\nif (!data || typeof data !== 'object' || Array.isArray(data)) {\n  throw new Error(\n    'Image keywords must be an object containing section IDs and keyword arrays.'\n  );\n}\n\nconst output = [];\n\nfor (const [sectionId, keywords] of Object.entries(data)) {\n\n  // Ignore metadata\n  if (\n    sectionId === 'template' ||\n    sectionId === 'websiteStyle' ||\n    sectionId === 'sectionCount' ||\n    sectionId === 'validation'\n  ) {\n    continue;\n  }\n\n  let keywordList = keywords;\n\n  // Convert string to array\n  if (typeof keywordList === 'string') {\n    keywordList = [keywordList];\n  }\n\n  // Skip invalid values\n  if (!Array.isArray(keywordList)) {\n    continue;\n  }\n\n  for (const keyword of keywordList) {\n\n    if (\n      typeof keyword !== 'string' ||\n      !keyword.trim()\n    ) {\n      continue;\n    }\n\n    output.push({\n      json: {\n        section_id: sectionId,\n        keyword: keyword.trim(),\n        query: keyword.trim(),\n        image_required: true\n      }\n    });\n  }\n}\n\nif (output.length === 0) {\n  throw new Error(\n    'No valid image keywords were found.'\n  );\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        64
+      ],
+      "id": "f6864b4d-bb5e-47d9-b1ea-43fa8deeb45d",
+      "name": "Split image keywords"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        64
+      ],
+      "id": "0814cba5-9fd2-4f22-8512-6eabf3a9244d",
+      "name": "Wait",
+      "webhookId": "6820a7d5-11c1-4487-822c-96d16e522bf8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// IMAGE PROCESSOR\n// Split image keywords → Fetch Images → Code\n// Mode: Run Once for All Items\n// ============================================================\n\n// Get data from previous nodes\nconst splitItems = $('Split image keywords').all();\nconst fetchItems = $input.all();\n\nconst results = [];\n\n// ------------------------------------------------------------\n// Helper function\n// ------------------------------------------------------------\nfunction getImageUrl(photo) {\n  if (!photo || !photo.src) {\n    return \"\";\n  }\n\n  return (\n    photo.src.large ||\n    photo.src.medium ||\n    photo.src.original ||\n    photo.src.small ||\n    \"\"\n  );\n}\n\n// ------------------------------------------------------------\n// Process each image request\n// ------------------------------------------------------------\nfor (let i = 0; i < fetchItems.length; i++) {\n\n  const splitData = splitItems[i]?.json || {};\n  const fetchData = fetchItems[i]?.json || {};\n\n  // Section\n  const section =\n    splitData.section ||\n    fetchData.section ||\n    `image-${i + 1}`;\n\n  // Keyword\n  const keyword =\n    splitData.keyword ||\n    fetchData.keyword ||\n    \"\";\n\n  // ----------------------------------------------------------\n  // Check if Pexels returned an error\n  // ----------------------------------------------------------\n  let apiError = null;\n\n  if (fetchData.error) {\n\n    if (typeof fetchData.error === \"string\") {\n      apiError = fetchData.error;\n    } \n    else if (fetchData.error.message) {\n      apiError = fetchData.error.message;\n    } \n    else {\n      apiError = JSON.stringify(fetchData.error);\n    }\n  }\n\n  // ----------------------------------------------------------\n  // Get Pexels photos\n  // ----------------------------------------------------------\n  const photos = Array.isArray(fetchData.photos)\n    ? fetchData.photos\n    : [];\n\n  // First photo\n  const photo = photos.length > 0\n    ? photos[0]\n    : null;\n\n  // ----------------------------------------------------------\n  // Get image URL\n  // ----------------------------------------------------------\n  const imageUrl = getImageUrl(photo);\n\n  // ----------------------------------------------------------\n  // Get alt text\n  // ----------------------------------------------------------\n  const altText =\n    photo?.alt ||\n    keyword ||\n    `${section} image`;\n\n  // ----------------------------------------------------------\n  // Create image object\n  // ----------------------------------------------------------\n  const image = imageUrl\n    ? {\n        src: imageUrl,\n        alt: altText\n      }\n    : null;\n\n  // ----------------------------------------------------------\n  // Final output\n  // ----------------------------------------------------------\n  results.push({\n    json: {\n\n      // Section information\n      section: section,\n\n      // Search keyword\n      keyword: keyword,\n\n      // Image object\n      image: image,\n\n      // Original Pexels photos\n      photos: photos,\n\n      // Status\n      imageFound: !!imageUrl,\n\n      // Number of photos returned\n      photoCount: photos.length,\n\n      // API error if any\n      apiError: apiError,\n\n      // Image URL separately\n      imageUrl: imageUrl,\n\n      // Alt text separately\n      imageAlt: altText,\n\n      // Processing index\n      index: i\n    }\n  });\n}\n\n// ------------------------------------------------------------\n// Return all results\n// ------------------------------------------------------------\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        64
+      ],
+      "id": "87621ab4-98dd-4b2d-944c-c889a1a41302",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ASSEMBLE SITE CODE\n// n8n Code Node\n// Mode: Run Once for All Items\n// ============================================================\n\n// ------------------------------------------------------------\n// 1. READ DATA FROM EXACT UPSTREAM NODES\n// ------------------------------------------------------------\n\nlet planner;\nlet writer;\nlet imageItems;\n\ntry {\n  planner = $('UI Planner Agent').first().json;\n} catch (error) {\n  throw new Error(\n    'Cannot read \"UI Planner Agent\". Check the node name.'\n  );\n}\n\ntry {\n  writer = $('Content Writer Agent').first().json;\n} catch (error) {\n  throw new Error(\n    'Cannot read \"Content Writer Agent\". Check the node name.'\n  );\n}\n\ntry {\n  imageItems = $('Fetch Images').all().map(item => item.json);\n} catch (error) {\n  imageItems = [];\n}\n\n\n// ------------------------------------------------------------\n// 2. HELPER FUNCTIONS\n// ------------------------------------------------------------\n\nfunction cleanString(value, fallback = '') {\n  if (value === undefined || value === null) {\n    return fallback;\n  }\n\n  return String(value).trim();\n}\n\n\nfunction escapeHtml(value) {\n  return cleanString(value)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#039;');\n}\n\n\nfunction slugify(value) {\n  return cleanString(value, 'my-website')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '')\n    .slice(0, 60) || 'my-website';\n}\n\n\nfunction firstNonEmpty(...values) {\n  for (const value of values) {\n    if (\n      value !== undefined &&\n      value !== null &&\n      String(value).trim() !== ''\n    ) {\n      return value;\n    }\n  }\n\n  return '';\n}\n\n\n// ------------------------------------------------------------\n// 3. GET BASIC WEBSITE INFORMATION\n// ------------------------------------------------------------\n\nconst userRequirement =\n  firstNonEmpty(\n    planner.userRequirement,\n    writer.userRequirement,\n    planner.requirement,\n    writer.requirement,\n    planner.description,\n    writer.description,\n    ''\n  );\n\nconst template =\n  cleanString(\n    planner.template ||\n    writer.template ||\n    'corporate'\n  ).toLowerCase();\n\nconst businessName =\n  firstNonEmpty(\n    writer.businessName,\n    writer.business_name,\n    planner.businessName,\n    planner.business_name\n  ) ||\n  'My Website';\n\nconst projectId =\n  firstNonEmpty(\n    planner.project_id,\n    planner.projectId,\n    writer.project_id,\n    writer.projectId\n  ) ||\n  slugify(businessName);\n\n\n// ------------------------------------------------------------\n// 4. GET PLANNER SECTIONS\n// ------------------------------------------------------------\n\nlet plannerSections = planner.sections || [];\n\nif (!Array.isArray(plannerSections)) {\n  plannerSections = Object.values(plannerSections);\n}\n\nif (!Array.isArray(plannerSections)) {\n  plannerSections = [];\n}\n\n\n// ------------------------------------------------------------\n// 5. GET CONTENT WRITER SECTIONS\n// ------------------------------------------------------------\n\nlet writerSections =\n  writer.sections ||\n  writer.generatedSections ||\n  {};\n\n\n// ------------------------------------------------------------\n// 6. NORMALIZE WRITER CONTENT\n// ------------------------------------------------------------\n\nconst writerMap = {};\n\nif (Array.isArray(writerSections)) {\n\n  for (const section of writerSections) {\n\n    const id =\n      section.id ||\n      section.section_id ||\n      section.sectionId;\n\n    if (id) {\n      writerMap[String(id)] = section;\n    }\n  }\n\n} else if (\n  writerSections &&\n  typeof writerSections === 'object'\n) {\n\n  for (const [key, value] of Object.entries(writerSections)) {\n\n    if (\n      value &&\n      typeof value === 'object'\n    ) {\n      writerMap[String(key)] = value;\n    }\n  }\n}\n\n\n// ------------------------------------------------------------\n// 7. IMAGE MAP\n// ------------------------------------------------------------\n\nconst imageMap = {};\n\n\nfor (const image of imageItems) {\n\n  const sectionId =\n    image.section_id ||\n    image.sectionId ||\n    image.section ||\n    image.id;\n\n  if (!sectionId) {\n    continue;\n  }\n\n  const imageUrl =\n    image.image_url ||\n    image.imageUrl ||\n    image.url ||\n    image.src?.large2x ||\n    image.src?.large ||\n    image.src?.original;\n\n  if (!imageUrl) {\n    continue;\n  }\n\n  if (!imageMap[sectionId]) {\n    imageMap[sectionId] = [];\n  }\n\n  if (!imageMap[sectionId].includes(imageUrl)) {\n    imageMap[sectionId].push(imageUrl);\n  }\n}\n\n\n// ------------------------------------------------------------\n// 8. DEFAULT 20 SECTION IDS\n// ------------------------------------------------------------\n\nconst defaultSectionIds = [\n  'hero',\n  'intro',\n  'about',\n  'story',\n  'services',\n  'featured',\n  'benefits',\n  'process',\n  'showcase',\n  'highlights',\n  'team',\n  'testimonials',\n  'case-studies',\n  'pricing',\n  'difference',\n  'faq',\n  'location',\n  'community',\n  'final-cta',\n  'contact'\n];\n\n\n// ------------------------------------------------------------\n// 9. MAKE SURE WE HAVE EXACTLY 20 SECTIONS\n// ------------------------------------------------------------\n\nlet sections = [];\n\nfor (let i = 0; i < 20; i++) {\n\n  const plannerSection =\n    plannerSections[i] || {};\n\n  const id =\n    plannerSection.id ||\n    plannerSection.section_id ||\n    defaultSectionIds[i];\n\n  const content =\n    writerMap[id] ||\n    writerMap[String(id)] ||\n    {};\n\n  const title =\n    firstNonEmpty(\n      content.title,\n      content.heading,\n      plannerSection.title,\n      plannerSection.heading\n    );\n\n  const description =\n    firstNonEmpty(\n      content.description,\n      content.subtitle,\n      content.text,\n      content.body,\n      plannerSection.description,\n      plannerSection.subtitle\n    );\n\n  const layout =\n    firstNonEmpty(\n      plannerSection.layout,\n      content.layout,\n      'default'\n    );\n\n  const cta =\n    firstNonEmpty(\n      content.cta,\n      content.button,\n      content.ctaText,\n      plannerSection.cta\n    );\n\n  const images =\n    imageMap[id] ||\n    imageMap[String(id)] ||\n    [];\n\n  sections.push({\n    id: String(id),\n    title: title || `${businessName} — Section ${i + 1}`,\n    description: description || '',\n    layout,\n    cta: cta || '',\n    images,\n    index: i + 1,\n    content\n  });\n}\n\n\n// ------------------------------------------------------------\n// 10. TEMPLATE DESIGN SYSTEMS\n// ------------------------------------------------------------\n\nconst designSystems = {\n\n  fitness: {\n    fontHeading: 'Montserrat',\n    fontBody: 'Inter',\n    accent: '#ff4d00',\n    style: 'bold athletic',\n    radius: '18px'\n  },\n\n  restaurant: {\n    fontHeading: 'Playfair Display',\n    fontBody: 'Inter',\n    accent: '#c68b59',\n    style: 'warm editorial',\n    radius: '16px'\n  },\n\n  bakery: {\n    fontHeading: 'Playfair Display',\n    fontBody: 'Inter',\n    accent: '#b86b3c',\n    style: 'artisan elegant',\n    radius: '18px'\n  },\n\n  ecommerce: {\n    fontHeading: 'DM Sans',\n    fontBody: 'Inter',\n    accent: '#111111',\n    style: 'minimal premium',\n    radius: '14px'\n  },\n\n  saas: {\n    fontHeading: 'Space Grotesk',\n    fontBody: 'Inter',\n    accent: '#635bff',\n    style: 'modern technology',\n    radius: '20px'\n  },\n\n  portfolio: {\n    fontHeading: 'Space Grotesk',\n    fontBody: 'Inter',\n    accent: '#111111',\n    style: 'creative editorial',\n    radius: '20px'\n  },\n\n  education: {\n    fontHeading: 'Plus Jakarta Sans',\n    fontBody: 'Inter',\n    accent: '#2563eb',\n    style: 'clean academic',\n    radius: '18px'\n  },\n\n  healthcare: {\n    fontHeading: 'Plus Jakarta Sans',\n    fontBody: 'Inter',\n    accent: '#0f766e',\n    style: 'clean trustworthy',\n    radius: '18px'\n  },\n\n  'real-estate': {\n    fontHeading: 'DM Sans',\n    fontBody: 'Inter',\n    accent: '#a16207',\n    style: 'luxury property',\n    radius: '16px'\n  },\n\n  travel: {\n    fontHeading: 'DM Sans',\n    fontBody: 'Inter',\n    accent: '#0891b2',\n    style: 'adventure editorial',\n    radius: '20px'\n  },\n\n  technology: {\n    fontHeading: 'Space Grotesk',\n    fontBody: 'Inter',\n    accent: '#06b6d4',\n    style: 'futuristic technology',\n    radius: '20px'\n  },\n\n  beauty: {\n    fontHeading: 'Playfair Display',\n    fontBody: 'Inter',\n    accent: '#be185d',\n    style: 'luxury beauty',\n    radius: '20px'\n  },\n\n  agency: {\n    fontHeading: 'Space Grotesk',\n    fontBody: 'Inter',\n    accent: '#7c3aed',\n    style: 'creative agency',\n    radius: '22px'\n  },\n\n  corporate: {\n    fontHeading: 'DM Sans',\n    fontBody: 'Inter',\n    accent: '#2563eb',\n    style: 'professional corporate',\n    radius: '16px'\n  }\n};\n\n\nconst design =\n  designSystems[template] ||\n  designSystems.corporate;\n\n\n// ------------------------------------------------------------\n// 11. SECTION-SPECIFIC IMAGE\n// ------------------------------------------------------------\n\nfunction getSectionImage(section, imageIndex = 0) {\n\n  if (\n    section.images &&\n    section.images.length > 0\n  ) {\n    return section.images[\n      imageIndex % section.images.length\n    ];\n  }\n\n  // External fallback only.\n  // Never use local paths.\n  return `https://picsum.photos/seed/${encodeURIComponent(\n    businessName + '-' + section.id + '-' + imageIndex\n  )}/1200/800`;\n}\n\n\n// ------------------------------------------------------------\n// 12. GENERATE NAVIGATION\n// ------------------------------------------------------------\n\nconst navItems = sections\n  .slice(0, 8)\n  .map(section => {\n\n    const label =\n      section.title\n        .replace(/[^\\w\\s-]/g, '')\n        .slice(0, 24);\n\n    return `\n      <a href=\"#${section.id}\">\n        ${escapeHtml(label)}\n      </a>\n    `;\n  })\n  .join('');\n\n\n// ------------------------------------------------------------\n// 13. RENDER DIFFERENT SECTION TYPES\n// ------------------------------------------------------------\n\nfunction renderSection(section) {\n\n  const id = section.id;\n  const title = escapeHtml(section.title);\n  const description = escapeHtml(section.description);\n  const image = getSectionImage(section);\n\n  const cta =\n    section.cta\n      ? `\n        <a class=\"btn btn-primary\"\n           href=\"#contact\">\n           ${escapeHtml(section.cta)}\n        </a>\n      `\n      : '';\n\n\n  // HERO\n  if (id === 'hero') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section hero-section\"\n      >\n\n        <div class=\"hero-overlay\"></div>\n\n        <img\n          class=\"hero-image\"\n          src=\"${escapeHtml(image)}\"\n          alt=\"${escapeHtml(section.title)}\"\n          loading=\"eager\"\n        >\n\n        <div class=\"hero-content container\">\n\n          <span class=\"eyebrow\">\n            ${escapeHtml(template.toUpperCase())}\n          </span>\n\n          <h1>${title}</h1>\n\n          <p>${description}</p>\n\n          <div class=\"hero-actions\">\n            ${cta}\n\n            <a\n              class=\"btn btn-secondary\"\n              href=\"#intro\"\n            >\n              Explore More\n            </a>\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // INTRO\n  if (id === 'intro') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section intro-section\"\n      >\n\n        <div class=\"container narrow\">\n\n          <span class=\"section-number\">\n            02\n          </span>\n\n          <h2>${title}</h2>\n\n          <p class=\"large-text\">\n            ${description}\n          </p>\n\n          ${cta}\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // ABOUT\n  if (id === 'about' || id === 'story') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section split-section\"\n      >\n\n        <div class=\"container split-grid\">\n\n          <div class=\"split-image\">\n            <img\n              src=\"${escapeHtml(image)}\"\n              alt=\"${escapeHtml(section.title)}\"\n              loading=\"lazy\"\n            >\n          </div>\n\n          <div class=\"split-content\">\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n            ${cta}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // SERVICES\n  if (\n    id === 'services' ||\n    id === 'programs' ||\n    id === 'featured'\n  ) {\n\n    const cards = [\n      0,\n      1,\n      2\n    ].map((index) => {\n\n      const cardImage =\n        getSectionImage(section, index);\n\n      const cardTitle =\n        section.content?.items?.[index]?.title ||\n        `${section.title} ${index + 1}`;\n\n      const cardDescription =\n        section.content?.items?.[index]?.description ||\n        section.description;\n\n      return `\n        <article class=\"service-card\">\n\n          <div class=\"card-image\">\n            <img\n              src=\"${escapeHtml(cardImage)}\"\n              alt=\"${escapeHtml(cardTitle)}\"\n              loading=\"lazy\"\n            >\n          </div>\n\n          <div class=\"card-body\">\n\n            <span class=\"card-index\">\n              0${index + 1}\n            </span>\n\n            <h3>\n              ${escapeHtml(cardTitle)}\n            </h3>\n\n            <p>\n              ${escapeHtml(cardDescription)}\n            </p>\n\n          </div>\n\n        </article>\n      `;\n    }).join('');\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n          </div>\n\n          <div class=\"service-grid\">\n            ${cards}\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // BENEFITS\n  if (\n    id === 'benefits' ||\n    id === 'difference'\n  ) {\n\n    const benefits = [\n      'Designed around your goals',\n      'Simple and effective experience',\n      'Flexible approach for different needs',\n      'Focused on meaningful results'\n    ];\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section benefits-section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n          </div>\n\n          <div class=\"benefits-grid\">\n\n            ${benefits.map((item, index) => `\n              <div class=\"benefit-item\">\n\n                <span>\n                  ${String(index + 1).padStart(2, '0')}\n                </span>\n\n                <h3>\n                  ${escapeHtml(item)}\n                </h3>\n\n                <p>\n                  ${escapeHtml(description)}\n                </p>\n\n              </div>\n            `).join('')}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // PROCESS\n  if (id === 'process') {\n\n    const steps = [\n      'Discover',\n      'Plan',\n      'Build',\n      'Improve'\n    ];\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section process-section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n          </div>\n\n          <div class=\"process-grid\">\n\n            ${steps.map((step, index) => `\n              <div class=\"process-step\">\n\n                <div class=\"process-number\">\n                  ${String(index + 1).padStart(2, '0')}\n                </div>\n\n                <h3>\n                  ${escapeHtml(step)}\n                </h3>\n\n                <p>\n                  ${escapeHtml(description)}\n                </p>\n\n              </div>\n            `).join('')}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // SHOWCASE / CASE STUDIES\n  if (\n    id === 'showcase' ||\n    id === 'case-studies'\n  ) {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section showcase-section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n          </div>\n\n          <div class=\"showcase-grid\">\n\n            <div class=\"showcase-large\">\n              <img\n                src=\"${escapeHtml(\n                  getSectionImage(section, 0)\n                )}\"\n                alt=\"${escapeHtml(title)}\"\n                loading=\"lazy\"\n              >\n            </div>\n\n            <div class=\"showcase-small\">\n              <img\n                src=\"${escapeHtml(\n                  getSectionImage(section, 1)\n                )}\"\n                alt=\"${escapeHtml(title)}\"\n                loading=\"lazy\"\n              >\n            </div>\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // TEAM\n  if (id === 'team') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n          </div>\n\n          <div class=\"team-grid\">\n\n            ${[0, 1, 2].map((index) => {\n\n              const teamImage =\n                getSectionImage(section, index);\n\n              return `\n                <article class=\"team-card\">\n\n                  <img\n                    src=\"${escapeHtml(teamImage)}\"\n                    alt=\"Team member\"\n                    loading=\"lazy\"\n                  >\n\n                  <div class=\"team-info\">\n\n                    <h3>\n                      ${escapeHtml(\n                        section.content?.items?.[index]?.title ||\n                        `Team Member ${index + 1}`\n                      )}\n                    </h3>\n\n                    <p>\n                      ${escapeHtml(\n                        section.content?.items?.[index]?.description ||\n                        description\n                      )}\n                    </p>\n\n                  </div>\n\n                </article>\n              `;\n\n            }).join('')}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // TESTIMONIALS\n  if (id === 'testimonials') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section testimonial-section\"\n      >\n\n        <div class=\"container testimonial-inner\">\n\n          <span class=\"quote-mark\">\n            “\n          </span>\n\n          <h2>${title}</h2>\n\n          <p class=\"testimonial-text\">\n            ${description}\n          </p>\n\n          <div class=\"testimonial-line\"></div>\n\n          <span class=\"testimonial-label\">\n            Customer Experience\n          </span>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // PRICING\n  if (id === 'pricing') {\n\n    const plans = [\n      'Starter',\n      'Professional',\n      'Premium'\n    ];\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section\"\n      >\n\n        <div class=\"container\">\n\n          <div class=\"section-heading\">\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n          </div>\n\n          <div class=\"pricing-grid\">\n\n            ${plans.map((plan, index) => `\n\n              <article\n                class=\"pricing-card ${\n                  index === 1\n                    ? 'featured-plan'\n                    : ''\n                }\"\n              >\n\n                <span class=\"plan-number\">\n                  0${index + 1}\n                </span>\n\n                <h3>\n                  ${plan}\n                </h3>\n\n                <p>\n                  ${escapeHtml(description)}\n                </p>\n\n                <ul>\n\n                  <li>Flexible options</li>\n                  <li>Quality experience</li>\n                  <li>Designed for your needs</li>\n\n                </ul>\n\n                <a\n                  href=\"#contact\"\n                  class=\"btn btn-primary\"\n                >\n                  Get Started\n                </a>\n\n              </article>\n\n            `).join('')}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // FAQ\n  if (id === 'faq') {\n\n    const questions = [\n      'How does it work?',\n      'Who is this suitable for?',\n      'How can I get started?',\n      'How can I contact you?'\n    ];\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section faq-section\"\n      >\n\n        <div class=\"container faq-grid\">\n\n          <div>\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n          </div>\n\n          <div class=\"faq-list\">\n\n            ${questions.map((question, index) => `\n              <details>\n\n                <summary>\n                  ${escapeHtml(question)}\n                  <span>+</span>\n                </summary>\n\n                <p>\n                  ${escapeHtml(description)}\n                </p>\n\n              </details>\n            `).join('')}\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // LOCATION\n  if (id === 'location') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section location-section\"\n      >\n\n        <div class=\"container location-grid\">\n\n          <div>\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n            ${cta}\n\n          </div>\n\n          <div class=\"location-image\">\n\n            <img\n              src=\"${escapeHtml(image)}\"\n              alt=\"${escapeHtml(title)}\"\n              loading=\"lazy\"\n            >\n\n          </div>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // COMMUNITY\n  if (id === 'community') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section community-section\"\n      >\n\n        <div class=\"container community-inner\">\n\n          <span class=\"section-number\">\n            ${String(section.index).padStart(2, '0')}\n          </span>\n\n          <h2>${title}</h2>\n\n          <p>${description}</p>\n\n          ${cta}\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // FINAL CTA\n  if (id === 'final-cta') {\n\n    return `\n      <section\n        id=\"${id}\"\n        class=\"section final-cta\"\n      >\n\n        <div class=\"container\">\n\n          <span class=\"section-number\">\n            ${String(section.index).padStart(2, '0')}\n          </span>\n\n          <h2>${title}</h2>\n\n          <p>${description}</p>\n\n          ${\n            cta ||\n            `\n              <a\n                href=\"#contact\"\n                class=\"btn btn-primary\"\n              >\n                Get Started\n              </a>\n            `\n          }\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // CONTACT\n  if (id === 'contact') {\n\n    const email =\n      writer.contactInfo?.email ||\n      writer.contact?.email ||\n      '';\n\n    const phone =\n      writer.contactInfo?.phone ||\n      writer.contact?.phone ||\n      '';\n\n    return `\n      <section\n        id=\"contact\"\n        class=\"section contact-section\"\n      >\n\n        <div class=\"container contact-grid\">\n\n          <div class=\"contact-content\">\n\n            <span class=\"section-number\">\n              ${String(section.index).padStart(2, '0')}\n            </span>\n\n            <h2>${title}</h2>\n\n            <p>${description}</p>\n\n            ${\n              email\n                ? `\n                  <p>\n                    <strong>Email:</strong>\n                    ${escapeHtml(email)}\n                  </p>\n                `\n                : ''\n            }\n\n            ${\n              phone\n                ? `\n                  <p>\n                    <strong>Phone:</strong>\n                    ${escapeHtml(phone)}\n                  </p>\n                `\n                : ''\n            }\n\n          </div>\n\n          <form\n            class=\"contact-form\"\n            id=\"contactForm\"\n          >\n\n            <input\n              type=\"text\"\n              name=\"name\"\n              placeholder=\"Your name\"\n              required\n            >\n\n            <input\n              type=\"email\"\n              name=\"email\"\n              placeholder=\"Your email\"\n              required\n            >\n\n            <textarea\n              name=\"message\"\n              rows=\"6\"\n              placeholder=\"Tell us how we can help\"\n              required\n            ></textarea>\n\n            <button\n              type=\"submit\"\n              class=\"btn btn-primary\"\n            >\n              Send Message\n            </button>\n\n          </form>\n\n        </div>\n\n      </section>\n    `;\n  }\n\n\n  // DEFAULT SECTION\n  return `\n    <section\n      id=\"${id}\"\n      class=\"section default-section\"\n    >\n\n      <div class=\"container default-grid\">\n\n        <div>\n\n          <span class=\"section-number\">\n            ${String(section.index).padStart(2, '0')}\n          </span>\n\n          <h2>${title}</h2>\n\n          <p>${description}</p>\n\n          ${cta}\n\n        </div>\n\n        <div class=\"default-image\">\n\n          <img\n            src=\"${escapeHtml(image)}\"\n            alt=\"${escapeHtml(title)}\"\n            loading=\"lazy\"\n          >\n\n        </div>\n\n      </div>\n\n    </section>\n  `;\n}\n\n\n// ------------------------------------------------------------\n// 14. GENERATE ALL 20 SECTIONS\n// ------------------------------------------------------------\n\nconst renderedSections =\n  sections\n    .map(section => renderSection(section))\n    .join('\\n');\n\n\n// ------------------------------------------------------------\n// 15. INDEX.HTML\n// ------------------------------------------------------------\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n\n  <meta charset=\"UTF-8\">\n\n  <meta\n    name=\"viewport\"\n    content=\"width=device-width, initial-scale=1.0\"\n  >\n\n  <meta\n    name=\"description\"\n    content=\"${escapeHtml(\n      writer.metaDescription ||\n      `${businessName} — ${template} website`\n    )}\"\n  >\n\n  <meta\n    name=\"theme-color\"\n    content=\"${design.accent}\"\n  >\n\n  <title>\n    ${escapeHtml(businessName)}\n  </title>\n\n  <link\n    rel=\"preconnect\"\n    href=\"https://fonts.googleapis.com\"\n  >\n\n  <link\n    rel=\"preconnect\"\n    href=\"https://fonts.gstatic.com\"\n    crossorigin\n  >\n\n  <link\n    href=\"https://fonts.googleapis.com/css2?family=${encodeURIComponent(\n      design.fontHeading\n    ).replace(/%20/g, '+')}:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap\"\n    rel=\"stylesheet\"\n  >\n\n  <link\n    rel=\"stylesheet\"\n    href=\"style.css\"\n  >\n\n</head>\n\n\n<body>\n\n  <header class=\"site-header\">\n\n    <div class=\"container nav-container\">\n\n      <a\n        class=\"logo\"\n        href=\"#hero\"\n      >\n        ${escapeHtml(businessName)}\n      </a>\n\n      <nav\n        class=\"desktop-nav\"\n        id=\"desktopNav\"\n      >\n        ${navItems}\n      </nav>\n\n      <button\n        class=\"menu-toggle\"\n        id=\"menuToggle\"\n        aria-label=\"Open menu\"\n        aria-expanded=\"false\"\n      >\n        <span></span>\n        <span></span>\n        <span></span>\n      </button>\n\n    </div>\n\n    <div\n      class=\"mobile-nav\"\n      id=\"mobileNav\"\n    >\n      ${navItems}\n    </div>\n\n  </header>\n\n\n  <main>\n\n    ${renderedSections}\n\n  </main>\n\n\n  <footer class=\"site-footer\">\n\n    <div class=\"container footer-grid\">\n\n      <div>\n\n        <div class=\"footer-logo\">\n          ${escapeHtml(businessName)}\n        </div>\n\n        <p>\n          ${escapeHtml(\n            writer.metaDescription ||\n            'Built for a better digital experience.'\n          )}\n        </p>\n\n      </div>\n\n      <div>\n\n        <h3>Navigation</h3>\n\n        ${navItems}\n\n      </div>\n\n    </div>\n\n    <div class=\"container footer-bottom\">\n\n      <span>\n        © ${new Date().getFullYear()}\n        ${escapeHtml(businessName)}\n      </span>\n\n      <span>\n        All rights reserved.\n      </span>\n\n    </div>\n\n  </footer>\n\n\n  <script src=\"script.js\"></script>\n\n</body>\n\n</html>`;\n\n\n// ------------------------------------------------------------\n// 16. CSS\n// ------------------------------------------------------------\n\nconst css = `\n\n:root {\n\n  --accent: ${design.accent};\n\n  --bg: #0a0a0a;\n\n  --surface: #111111;\n\n  --surface-2: #181818;\n\n  --text: #f5f5f5;\n\n  --muted: #a1a1aa;\n\n  --border: rgba(255,255,255,.10);\n\n  --radius: ${design.radius};\n\n  --max-width: 1240px;\n\n}\n\n\n* {\n  box-sizing: border-box;\n}\n\n\nhtml {\n  scroll-behavior: smooth;\n}\n\n\nbody {\n\n  margin: 0;\n\n  background: var(--bg);\n\n  color: var(--text);\n\n  font-family: 'Inter', sans-serif;\n\n  line-height: 1.6;\n\n}\n\n\nimg {\n\n  display: block;\n\n  width: 100%;\n\n  object-fit: cover;\n\n}\n\n\na {\n\n  color: inherit;\n\n  text-decoration: none;\n\n}\n\n\nbutton,\ninput,\ntextarea {\n\n  font: inherit;\n\n}\n\n\n.container {\n\n  width: min(\n    calc(100% - 40px),\n    var(--max-width)\n  );\n\n  margin: auto;\n\n}\n\n\n.narrow {\n\n  max-width: 850px;\n\n}\n\n\n.section {\n\n  position: relative;\n\n  padding: 120px 0;\n\n  overflow: hidden;\n\n}\n\n\n.section-heading {\n\n  max-width: 760px;\n\n  margin-bottom: 55px;\n\n}\n\n\n.section-heading h2,\n.section h2 {\n\n  margin: 10px 0 20px;\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: clamp(\n    2.3rem,\n    5vw,\n    5rem\n  );\n\n  line-height: 1.02;\n\n  letter-spacing: -.04em;\n\n}\n\n\n.section-heading p,\n.section p {\n\n  color: var(--muted);\n\n  font-size: 1.05rem;\n\n}\n\n\n.section-number {\n\n  color: var(--accent);\n\n  font-weight: 700;\n\n  letter-spacing: .15em;\n\n  font-size: .8rem;\n\n}\n\n\n.eyebrow {\n\n  display: inline-block;\n\n  margin-bottom: 20px;\n\n  padding: 8px 13px;\n\n  border: 1px solid\n    rgba(255,255,255,.2);\n\n  border-radius: 999px;\n\n  font-size: .75rem;\n\n  font-weight: 700;\n\n  letter-spacing: .15em;\n\n}\n\n\n.site-header {\n\n  position: fixed;\n\n  top: 0;\n\n  left: 0;\n\n  right: 0;\n\n  z-index: 1000;\n\n  background: rgba(10,10,10,.72);\n\n  backdrop-filter: blur(18px);\n\n  border-bottom: 1px solid var(--border);\n\n}\n\n\n.nav-container {\n\n  min-height: 76px;\n\n  display: flex;\n\n  align-items: center;\n\n  justify-content: space-between;\n\n}\n\n\n.logo {\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: 1.15rem;\n\n  font-weight: 800;\n\n}\n\n\n.desktop-nav {\n\n  display: flex;\n\n  gap: 24px;\n\n}\n\n\n.desktop-nav a {\n\n  color: #d4d4d8;\n\n  font-size: .9rem;\n\n  transition: .25s ease;\n\n}\n\n\n.desktop-nav a:hover {\n\n  color: var(--accent);\n\n}\n\n\n.menu-toggle {\n\n  display: none;\n\n  width: 42px;\n\n  height: 42px;\n\n  border: 1px solid var(--border);\n\n  background: transparent;\n\n  border-radius: 10px;\n\n  cursor: pointer;\n\n}\n\n\n.menu-toggle span {\n\n  display: block;\n\n  width: 20px;\n\n  height: 2px;\n\n  margin: 4px auto;\n\n  background: white;\n\n}\n\n\n.mobile-nav {\n\n  display: none;\n\n}\n\n\n.hero-section {\n\n  min-height: 100vh;\n\n  display: flex;\n\n  align-items: center;\n\n  position: relative;\n\n}\n\n\n.hero-image {\n\n  position: absolute;\n\n  inset: 0;\n\n  width: 100%;\n\n  height: 100%;\n\n  object-fit: cover;\n\n}\n\n\n.hero-overlay {\n\n  position: absolute;\n\n  inset: 0;\n\n  background:\n    linear-gradient(\n      90deg,\n      rgba(0,0,0,.88),\n      rgba(0,0,0,.40),\n      rgba(0,0,0,.15)\n    );\n\n  z-index: 1;\n\n}\n\n\n.hero-content {\n\n  position: relative;\n\n  z-index: 2;\n\n  padding-top: 90px;\n\n  max-width: 900px;\n\n}\n\n\n.hero-content h1 {\n\n  max-width: 900px;\n\n  margin: 0 0 25px;\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: clamp(\n    3.5rem,\n    8vw,\n    8rem\n  );\n\n  line-height: .92;\n\n  letter-spacing: -.06em;\n\n}\n\n\n.hero-content p {\n\n  max-width: 650px;\n\n  font-size: 1.15rem;\n\n  color: #d4d4d8;\n\n}\n\n\n.hero-actions {\n\n  display: flex;\n\n  flex-wrap: wrap;\n\n  gap: 14px;\n\n  margin-top: 32px;\n\n}\n\n\n.btn {\n\n  display: inline-flex;\n\n  align-items: center;\n\n  justify-content: center;\n\n  min-height: 50px;\n\n  padding: 0 24px;\n\n  border-radius: 999px;\n\n  font-weight: 700;\n\n  border: 1px solid transparent;\n\n  transition:\n    transform .25s ease,\n    background .25s ease;\n\n}\n\n\n.btn:hover {\n\n  transform: translateY(-2px);\n\n}\n\n\n.btn-primary {\n\n  background: var(--accent);\n\n  color: white;\n\n}\n\n\n.btn-secondary {\n\n  border-color: rgba(255,255,255,.25);\n\n  background: rgba(255,255,255,.05);\n\n}\n\n\n.intro-section {\n\n  text-align: center;\n\n}\n\n\n.large-text {\n\n  font-size: clamp(\n    1.4rem,\n    3vw,\n    2.3rem\n  ) !important;\n\n}\n\n\n.split-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1.1fr .9fr;\n\n  gap: 80px;\n\n  align-items: center;\n\n}\n\n\n.split-image img {\n\n  height: 650px;\n\n  border-radius: var(--radius);\n\n}\n\n\n.split-content {\n\n  max-width: 600px;\n\n}\n\n\n.service-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    repeat(3, 1fr);\n\n  gap: 22px;\n\n}\n\n\n.service-card {\n\n  overflow: hidden;\n\n  background: var(--surface);\n\n  border: 1px solid var(--border);\n\n  border-radius: var(--radius);\n\n  transition:\n    transform .3s ease,\n    border-color .3s ease;\n\n}\n\n\n.service-card:hover {\n\n  transform: translateY(-8px);\n\n  border-color:\n    color-mix(\n      in srgb,\n      var(--accent) 50%,\n      transparent\n    );\n\n}\n\n\n.card-image img {\n\n  height: 300px;\n\n}\n\n\n.card-body {\n\n  padding: 28px;\n\n}\n\n\n.card-index {\n\n  color: var(--accent);\n\n  font-size: .75rem;\n\n  font-weight: 700;\n\n}\n\n\n.card-body h3 {\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: 1.45rem;\n\n}\n\n\n.card-body p {\n\n  font-size: .95rem !important;\n\n}\n\n\n.benefits-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    repeat(2, 1fr);\n\n  border-top: 1px solid var(--border);\n\n}\n\n\n.benefit-item {\n\n  padding: 40px;\n\n  border-bottom: 1px solid var(--border);\n\n}\n\n\n.benefit-item:nth-child(odd) {\n\n  border-right: 1px solid var(--border);\n\n}\n\n\n.benefit-item span {\n\n  color: var(--accent);\n\n  font-weight: 800;\n\n}\n\n\n.process-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    repeat(4, 1fr);\n\n  gap: 18px;\n\n}\n\n\n.process-step {\n\n  min-height: 280px;\n\n  padding: 28px;\n\n  background: var(--surface);\n\n  border: 1px solid var(--border);\n\n  border-radius: var(--radius);\n\n}\n\n\n.process-number {\n\n  font-size: 3rem;\n\n  font-weight: 800;\n\n  color: var(--accent);\n\n}\n\n\n.showcase-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1.5fr .5fr;\n\n  gap: 18px;\n\n}\n\n\n.showcase-grid img {\n\n  height: 600px;\n\n  border-radius: var(--radius);\n\n}\n\n\n.showcase-small img {\n\n  height: 600px;\n\n}\n\n\n.team-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    repeat(3, 1fr);\n\n  gap: 22px;\n\n}\n\n\n.team-card {\n\n  background: var(--surface);\n\n  border-radius: var(--radius);\n\n  overflow: hidden;\n\n  border: 1px solid var(--border);\n\n}\n\n\n.team-card img {\n\n  height: 420px;\n\n}\n\n\n.team-info {\n\n  padding: 25px;\n\n}\n\n\n.testimonial-section {\n\n  background: var(--surface);\n\n}\n\n\n.testimonial-inner {\n\n  max-width: 900px;\n\n  text-align: center;\n\n}\n\n\n.quote-mark {\n\n  font-size: 8rem;\n\n  line-height: .7;\n\n  color: var(--accent);\n\n}\n\n\n.testimonial-text {\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: clamp(\n    1.8rem,\n    4vw,\n    3.5rem\n  ) !important;\n\n  color: white !important;\n\n}\n\n\n.testimonial-line {\n\n  width: 60px;\n\n  height: 2px;\n\n  background: var(--accent);\n\n  margin: 30px auto;\n\n}\n\n\n.pricing-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    repeat(3, 1fr);\n\n  gap: 20px;\n\n}\n\n\n.pricing-card {\n\n  padding: 35px;\n\n  background: var(--surface);\n\n  border: 1px solid var(--border);\n\n  border-radius: var(--radius);\n\n}\n\n\n.featured-plan {\n\n  border-color: var(--accent);\n\n  transform: translateY(-10px);\n\n}\n\n\n.plan-number {\n\n  color: var(--accent);\n\n  font-weight: 800;\n\n}\n\n\n.pricing-card ul {\n\n  list-style: none;\n\n  padding: 0;\n\n  margin: 30px 0;\n\n}\n\n\n.pricing-card li {\n\n  padding: 9px 0;\n\n  color: var(--muted);\n\n  border-bottom: 1px solid var(--border);\n\n}\n\n\n.faq-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    .8fr 1.2fr;\n\n  gap: 80px;\n\n}\n\n\n.faq-list details {\n\n  border-top: 1px solid var(--border);\n\n  padding: 22px 0;\n\n}\n\n\n.faq-list summary {\n\n  display: flex;\n\n  justify-content: space-between;\n\n  cursor: pointer;\n\n  font-weight: 700;\n\n}\n\n\n.faq-list summary span {\n\n  color: var(--accent);\n\n}\n\n\n.location-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1fr 1fr;\n\n  gap: 60px;\n\n  align-items: center;\n\n}\n\n\n.location-image img {\n\n  height: 500px;\n\n  border-radius: var(--radius);\n\n}\n\n\n.community-section {\n\n  background: var(--accent);\n\n  color: white;\n\n  text-align: center;\n\n}\n\n\n.community-section p {\n\n  color: rgba(255,255,255,.8);\n\n  max-width: 700px;\n\n  margin: auto auto 30px;\n\n}\n\n\n.final-cta {\n\n  text-align: center;\n\n  background: var(--surface);\n\n}\n\n\n.final-cta p {\n\n  max-width: 700px;\n\n  margin: 0 auto 30px;\n\n}\n\n\n.contact-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1fr 1fr;\n\n  gap: 70px;\n\n}\n\n\n.contact-form {\n\n  display: flex;\n\n  flex-direction: column;\n\n  gap: 15px;\n\n}\n\n\n.contact-form input,\n.contact-form textarea {\n\n  width: 100%;\n\n  border: 1px solid var(--border);\n\n  background: var(--surface);\n\n  color: white;\n\n  border-radius: 12px;\n\n  padding: 16px;\n\n  outline: none;\n\n}\n\n\n.contact-form input:focus,\n.contact-form textarea:focus {\n\n  border-color: var(--accent);\n\n}\n\n\n.default-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1fr 1fr;\n\n  gap: 70px;\n\n  align-items: center;\n\n}\n\n\n.default-image img {\n\n  height: 500px;\n\n  border-radius: var(--radius);\n\n}\n\n\n.site-footer {\n\n  padding: 70px 0 25px;\n\n  background: #050505;\n\n  border-top: 1px solid var(--border);\n\n}\n\n\n.footer-grid {\n\n  display: grid;\n\n  grid-template-columns:\n    1fr 1fr;\n\n  gap: 60px;\n\n}\n\n\n.footer-logo {\n\n  font-family: '${design.fontHeading}', sans-serif;\n\n  font-size: 1.5rem;\n\n  font-weight: 800;\n\n}\n\n\n.site-footer p {\n\n  color: var(--muted);\n\n  max-width: 500px;\n\n}\n\n\n.footer-grid nav a,\n.footer-grid > div:last-child a {\n\n  display: block;\n\n  margin: 8px 0;\n\n  color: var(--muted);\n\n}\n\n\n.footer-bottom {\n\n  display: flex;\n\n  justify-content: space-between;\n\n  gap: 20px;\n\n  padding-top: 30px;\n\n  margin-top: 50px;\n\n  border-top: 1px solid var(--border);\n\n  color: #71717a;\n\n  font-size: .85rem;\n\n}\n\n\n/* TABLET */\n\n@media (max-width: 900px) {\n\n  .desktop-nav {\n    display: none;\n  }\n\n  .menu-toggle {\n    display: block;\n  }\n\n  .mobile-nav {\n    padding: 20px;\n    border-top: 1px solid var(--border);\n    background: #080808;\n  }\n\n  .mobile-nav.active {\n    display: flex;\n    flex-direction: column;\n    gap: 18px;\n  }\n\n  .split-grid,\n  .default-grid,\n  .contact-grid,\n  .location-grid,\n  .faq-grid {\n    grid-template-columns: 1fr;\n    gap: 45px;\n  }\n\n  .service-grid,\n  .team-grid,\n  .pricing-grid {\n    grid-template-columns: repeat(2, 1fr);\n  }\n\n  .process-grid {\n    grid-template-columns: repeat(2, 1fr);\n  }\n\n}\n\n\n/* MOBILE */\n\n@media (max-width: 600px) {\n\n  .container {\n    width: min(\n      calc(100% - 28px),\n      var(--max-width)\n    );\n  }\n\n  .section {\n    padding: 80px 0;\n  }\n\n  .hero-content h1 {\n    font-size: 3.4rem;\n  }\n\n  .hero-content p {\n    font-size: 1rem;\n  }\n\n  .service-grid,\n  .team-grid,\n  .pricing-grid,\n  .process-grid,\n  .benefits-grid {\n    grid-template-columns: 1fr;\n  }\n\n  .benefit-item:nth-child(odd) {\n    border-right: none;\n  }\n\n  .split-image img,\n  .location-image img,\n  .default-image img {\n    height: 380px;\n  }\n\n  .showcase-grid {\n    grid-template-columns: 1fr;\n  }\n\n  .showcase-grid img,\n  .showcase-small img {\n    height: 360px;\n  }\n\n  .featured-plan {\n    transform: none;\n  }\n\n  .footer-grid {\n    grid-template-columns: 1fr;\n  }\n\n  .footer-bottom {\n    flex-direction: column;\n  }\n\n}\n\n`;\n\n\n// ------------------------------------------------------------\n// 17. JAVASCRIPT\n// ------------------------------------------------------------\n\nconst javascript = `\n\ndocument.addEventListener(\n  'DOMContentLoaded',\n  () => {\n\n    // -------------------------------\n    // MOBILE MENU\n    // -------------------------------\n\n    const menuToggle =\n      document.getElementById(\n        'menuToggle'\n      );\n\n    const mobileNav =\n      document.getElementById(\n        'mobileNav'\n      );\n\n\n    if (menuToggle && mobileNav) {\n\n      menuToggle.addEventListener(\n        'click',\n        () => {\n\n          const active =\n            mobileNav.classList.toggle(\n              'active'\n            );\n\n          menuToggle.setAttribute(\n            'aria-expanded',\n            active\n          );\n\n        }\n      );\n\n\n      mobileNav\n        .querySelectorAll('a')\n        .forEach(link => {\n\n          link.addEventListener(\n            'click',\n            () => {\n\n              mobileNav.classList.remove(\n                'active'\n              );\n\n              menuToggle.setAttribute(\n                'aria-expanded',\n                'false'\n              );\n\n            }\n          );\n\n        });\n\n    }\n\n\n    // -------------------------------\n    // SCROLL REVEAL\n    // -------------------------------\n\n    const sections =\n      document.querySelectorAll(\n        '.section'\n      );\n\n\n    const observer =\n      new IntersectionObserver(\n        entries => {\n\n          entries.forEach(entry => {\n\n            if (entry.isIntersecting) {\n\n              entry.target.style.opacity =\n                '1';\n\n              entry.target.style.transform =\n                'translateY(0)';\n\n            }\n\n          });\n\n        },\n        {\n          threshold: .12\n        }\n      );\n\n\n    sections.forEach(section => {\n\n      section.style.opacity = '0';\n\n      section.style.transform =\n        'translateY(25px)';\n\n      section.style.transition =\n        'opacity .7s ease, transform .7s ease';\n\n      observer.observe(section);\n\n    });\n\n\n    // -------------------------------\n    // CONTACT FORM\n    // -------------------------------\n\n    const contactForm =\n      document.getElementById(\n        'contactForm'\n      );\n\n\n    if (contactForm) {\n\n      contactForm.addEventListener(\n        'submit',\n        event => {\n\n          event.preventDefault();\n\n          alert(\n            'Thank you! Your message has been received.'\n          );\n\n          contactForm.reset();\n\n        }\n      );\n\n    }\n\n\n    // -------------------------------\n    // ACTIVE NAVIGATION\n    // -------------------------------\n\n    const navLinks =\n      document.querySelectorAll(\n        '.desktop-nav a'\n      );\n\n\n    const sectionObserver =\n      new IntersectionObserver(\n        entries => {\n\n          entries.forEach(entry => {\n\n            if (entry.isIntersecting) {\n\n              navLinks.forEach(link => {\n\n                link.style.color =\n                  '';\n\n              });\n\n\n              const activeLink =\n                document.querySelector(\n                  '.desktop-nav a[href=\"#' +\n                  entry.target.id +\n                  '\"]'\n                );\n\n\n              if (activeLink) {\n\n                activeLink.style.color =\n                  'var(--accent)';\n\n              }\n\n            }\n\n          });\n\n        },\n        {\n          threshold: .45\n        }\n      );\n\n\n    document\n      .querySelectorAll(\n        'main .section'\n      )\n      .forEach(section => {\n\n        sectionObserver.observe(\n          section\n        );\n\n      });\n\n  }\n\n);\n\n`;\n\n\n// ------------------------------------------------------------\n// 18. VALIDATION\n// ------------------------------------------------------------\n\nif (sections.length !== 20) {\n\n  throw new Error(\n    `Website must contain exactly 20 sections. Found ${sections.length}.`\n  );\n\n}\n\n\nif (!html.includes('<section')) {\n\n  throw new Error(\n    'HTML generation failed: no sections found.'\n  );\n\n}\n\n\nif (!css || css.length < 1000) {\n\n  throw new Error(\n    'CSS generation failed.'\n  );\n\n}\n\n\nif (!javascript) {\n\n  throw new Error(\n    'JavaScript generation failed.'\n  );\n\n}\n\n\n// ------------------------------------------------------------\n// 19. RETURN FILES\n// ------------------------------------------------------------\n\nreturn [\n  {\n    json: {\n\n      project_id: projectId,\n\n      business_name: businessName,\n\n      template: template,\n\n      section_count: 20,\n\n      user_requirement: userRequirement,\n\n      image_count:\n        Object.values(imageMap)\n          .reduce(\n            (total, images) =>\n              total + images.length,\n            0\n          ),\n\n      files: [\n\n        {\n          filename: 'index.html',\n          content: html\n        },\n\n        {\n          filename: 'style.css',\n          content: css\n        },\n\n        {\n          filename: 'script.js',\n          content: javascript\n        }\n\n      ],\n\n      html: html,\n\n      css: css,\n\n      javascript: javascript\n\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        64
+      ],
+      "id": "28137f3a-70a1-405e-ae3d-636f0570edbd",
+      "name": "Assemble Site Code"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-site",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        1024
+      ],
+      "id": "7288b164-5945-440b-b785-4f96089d7486",
+      "name": "Webhook",
+      "webhookId": "9b2c4a9a-ea3f-4bdf-9067-a0de483618cf"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "dhanussh430",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "repository": {
+          "__rl": true,
+          "value": "={{ $json.repository_name }}",
+          "mode": "name"
+        },
+        "filePath": "={{ $json.filename }}",
+        "fileContent": "={{ $json.content }}",
+        "commitMessage": "Update site files"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        1024
+      ],
+      "id": "670ed12d-cf63-4302-a91c-fbded9f65762",
+      "name": "Create a file",
+      "webhookId": "cd82eee5-7ddd-478b-a1c7-e886c76d42bd",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vercel.com/v13/deployments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('Code').item.json.project_id }}\",\n  \"project\": \"{{ $('Code').item.json.project_id }}\",\n  \"gitSource\": {\n    \"type\": \"github\",\n    \"repoId\": \"{{ $('Git Post').item.json.id }}\",\n    \"ref\": \"main\"\n  },\n  \"projectSettings\": {\n    \"framework\": null\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        1024
+      ],
+      "id": "04b4dd93-25f5-4dc4-9e41-ac1e6138d856",
+      "name": "Create Vercel Project",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "  https://api.github.com/user/repos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  name: (($input.item.json.business_name || 'website')\n          .toLowerCase()\n          .replace(/[^a-z0-9]+/g, '-')\n          .replace(/^-+|-+$/g, '')) + '-' + Date.now(),\n  description: 'Website for ' + ($input.item.json.business_name || 'Website'),\n  private: false\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -128,
+        1024
+      ],
+      "id": "1cd8639d-5127-4a5c-bfe3-c1b64df8da2c",
+      "name": "Git Post",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// PREPARE WEBSITE FILES FOR GITHUB\n// ============================================================\n\n// Get GitHub repository response from the previous node\nconst gitPost = $input.first().json;\n\n\n// Get website data from Assemble Site Code\nconst websiteData = $('Assemble Site Code').first().json;\n\n\n// ------------------------------------------------------------\n// Validate files\n// ------------------------------------------------------------\n\nif (!websiteData.files) {\n  throw new Error(\n    'No \"files\" array found in Assemble Site Code output.'\n  );\n}\n\nif (!Array.isArray(websiteData.files)) {\n  throw new Error(\n    '\"files\" must be an array.'\n  );\n}\n\nif (websiteData.files.length === 0) {\n  throw new Error(\n    'The files array is empty.'\n  );\n}\n\n\n// ------------------------------------------------------------\n// Project information\n// ------------------------------------------------------------\n\nconst projectId =\n  websiteData.project_id ||\n  gitPost.name ||\n  `website-${Date.now()}`;\n\nconst businessName =\n  websiteData.business_name ||\n  websiteData.businessName ||\n  'Website';\n\n\n// ------------------------------------------------------------\n// Create ONE n8n item for EACH file\n// ------------------------------------------------------------\n\nreturn websiteData.files.map((file, index) => {\n\n  const filename =\n    file.filename ||\n    file.name ||\n    `file-${index + 1}.txt`;\n\n  const content =\n    file.content ?? '';\n\n  return {\n    json: {\n\n      // Project\n      project_id: projectId,\n\n      business_name: businessName,\n\n      // GitHub repository\n      repository_owner:\n        gitPost.owner?.login ||\n        'dhanussh430',\n\n      repository_name:\n        gitPost.name ||\n        projectId,\n\n      repository_full_name:\n        gitPost.full_name ||\n        '',\n\n      repository_url:\n        gitPost.html_url ||\n        '',\n\n      // Current file\n      filename: filename,\n\n      content: String(content),\n\n      // Base64 version if needed later\n      content_base64:\n        Buffer\n          .from(String(content), 'utf8')\n          .toString('base64'),\n\n      // Useful debugging information\n      file_index: index,\n\n      file_count:\n        websiteData.files.length\n\n    }\n  };\n\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        1024
+      ],
+      "id": "de69a2f1-a213-432d-8ffb-b2288ef5232d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"{{ $json.status }}\",\n  \"business_name\": \"{{ $json.business_name }}\",\n  \"project_id\": \"{{ $json.project_id }}\",\n  \"live_url\": \"{{ $json.live_url }}\",\n  \"repo_url\": \"{{ $json.repo_url }}\",\n  \"message\": {{ JSON.stringify($json.message) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2032,
+        1088
+      ],
+      "id": "b1bf4f01-974f-410e-8ee2-f23ad7fa7ade",
+      "name": "Respond to Webhook",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "projects",
+        "fields": "=project_id,business_name,repo_url,live_url,status,created_at",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        1584,
+        1072
+      ],
+      "id": "580ddf79-c7bd-476f-8575-107b5df195c9",
+      "name": "Insert documents",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94a6f10d-afbc-4e4f-a269-59aa6d8c0206",
+              "name": "project_id",
+              "value": "={{ $('Code').item.json.project_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ee640bb1-657d-49cc-ba27-4b38f843d92a",
+              "name": "business_name",
+              "value": "={{ $('Code').item.json.business_name }}",
+              "type": "string"
+            },
+            {
+              "id": "2a9043fc-5b35-441a-974a-d9dab19d1d35",
+              "name": "repo_url",
+              "value": "=https://github.com/dhanussh430/{{ $('Code').item.json.project_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ccb3682b-f7ee-4b99-8513-6fc5cf576077",
+              "name": "live_url",
+              "value": "=https://{{ $json.alias[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "27b65882-9d01-4a65-b0c0-c0a2d2c8a0cc",
+              "name": "=status",
+              "value": "READY",
+              "type": "string"
+            },
+            {
+              "id": "a5fbb7c9-b06a-457b-a7f0-32ae581896ca",
+              "name": "created_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        1072
+      ],
+      "id": "5af3d930-14ea-443a-a9fd-9e1f756cf953",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        1040
+      ],
+      "id": "e6591b81-0c39-40ec-b608-052a6e1b3f41",
+      "name": "Wait1",
+      "webhookId": "4c816a01-f301-4959-9473-8e7c2dc8f197"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        1504
+      ],
+      "id": "30f8d900-ef6e-444d-84b5-4844f125d0f5",
+      "name": "When Executed by Another Workflow",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "let payload;\n\ntry {\n  // Works when triggered via the Webhook (Flowise, HTTP calls, etc.)\n  payload = $('Webhook').item.json.body;\n} catch (e) {\n  // Falls back to this when triggered via \"When Executed by Another Workflow\"\n  payload = $('When Executed by Another Workflow').item.json;\n}\n\nreturn [{\n  json: {\n    project_id: payload.project_id,\n    business_name: payload.business_name,\n    files: payload.files\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        1504
+      ],
+      "id": "3fad2ece-c646-4f00-8ffb-d0d41749c5eb",
+      "name": "'Normalize Trigger Input"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        1024
+      ],
+      "id": "345893ca-d61e-4d6d-bd4a-00cdad1343fd",
+      "name": "Wait2",
+      "webhookId": "d9c7d12e-0de0-40c2-8d29-7cd363b1d379"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        336
+      ],
+      "id": "23674dc8-1fee-4138-b2aa-015dddf94186",
+      "name": "Groq Chat Model1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        336
+      ],
+      "id": "9992d7e7-76c3-4be6-9516-858fcde46e7b",
+      "name": "Groq Chat Model2"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        384
+      ],
+      "id": "cda8b4f7-226e-4e66-bb16-2bc46957b04f",
+      "name": "Groq Chat Model3"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        48,
+        336
+      ],
+      "id": "203da80b-2895-4033-91ff-641c57953c6a",
+      "name": "Groq Chat Model4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// FINAL CHAT RESPONSE\n// Convert multiple deployment items into\n// ONE clean response for the chat\n// ==========================================\n\nconst items = $input.all();\n\nif (items.length === 0) {\n  return [\n    {\n      json: {\n        status: \"error\",\n        message: \"❌ No deployment result was received.\"\n      }\n    }\n  ];\n}\n\n// Take the first item because the deployment\n// currently produces multiple items (one per file)\nconst item = items[0].json;\n\n// Safely get values\nconst businessName =\n  item.business_name ||\n  item.businessName ||\n  \"Your Website\";\n\nconst projectId =\n  item.project_id ||\n  \"N/A\";\n\nconst liveUrl =\n  item.live_url ||\n  item.url ||\n  \"\";\n\nconst repoUrl =\n  item.repo_url ||\n  item.repository_url ||\n  \"\";\n\n// ------------------------------------------\n// Build final chat message\n// ------------------------------------------\n\nlet message = `🎉 Website created successfully!\n\n🏪 Business: ${businessName}\n\n🆔 Project ID:\n${projectId}\n`;\n\n// Add live website URL if available\nif (liveUrl) {\n  message += `\n🌐 Live Website:\n${liveUrl}\n`;\n}\n\n// Add GitHub URL if available\nif (repoUrl) {\n  message += `\n📦 GitHub Repository:\n${repoUrl}\n`;\n}\n\nmessage += `\n✅ Website deployment completed successfully!`;\n\n// ------------------------------------------\n// Return ONE item\n// ------------------------------------------\n\nreturn [\n  {\n    json: {\n      status: \"success\",\n      business_name: businessName,\n      project_id: projectId,\n      live_url: liveUrl,\n      repo_url: repoUrl,\n      message: message\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        1072
+      ],
+      "id": "4c7bcbd5-4a55-4e29-9511-cb42e15b782d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// UI PLANNER - 20 SLIDE WEBSITE PLANNER\n// ============================================================\n\n// Get input from previous node\nconst input = $input.first().json;\n\n// Try common input locations\nconst userRequirement =\n  input.userRequirement ||\n  input.websiteRequirement ||\n  input.description ||\n  input.prompt ||\n  input.message ||\n  input.chatInput ||\n  input.text ||\n  input.body?.description ||\n  input.body?.prompt ||\n  \"\";\n\n// ------------------------------------------------------------\n// TEMPLATE DETECTION\n// ------------------------------------------------------------\n\nconst text = String(userRequirement).toLowerCase();\n\nlet template = \"corporate\";\n\nif (\n  /bakery|cafe|restaurant|food|coffee|pizza|hotel|dining|menu/.test(text)\n) {\n  template = \"restaurant\";\n}\nelse if (\n  /shop|store|ecommerce|e-commerce|product|fashion|clothing|cart|online store/.test(text)\n) {\n  template = \"ecommerce\";\n}\nelse if (\n  /saas|software as a service|subscription|dashboard|cloud software/.test(text)\n) {\n  template = \"saas\";\n}\nelse if (\n  /gym|fitness|workout|trainer|yoga|sports/.test(text)\n) {\n  template = \"fitness\";\n}\nelse if (\n  /portfolio|developer portfolio|designer|photographer|freelancer|artist/.test(text)\n) {\n  template = \"portfolio\";\n}\nelse if (\n  /college|school|university|education|course|academy|training|learning/.test(text)\n) {\n  template = \"education\";\n}\nelse if (\n  /real estate|property|properties|villa|apartment|house|realty/.test(text)\n) {\n  template = \"real-estate\";\n}\nelse if (\n  /travel|tourism|tour|holiday|vacation|trip|destination|resort/.test(text)\n) {\n  template = \"travel\";\n}\nelse if (\n  /hospital|clinic|healthcare|doctor|medical|health|dental/.test(text)\n) {\n  template = \"healthcare\";\n}\nelse if (\n  /event|conference|wedding|festival|concert|workshop/.test(text)\n) {\n  template = \"event\";\n}\nelse if (\n  /agency|marketing|digital marketing|advertising|creative agency/.test(text)\n) {\n  template = \"agency\";\n}\nelse if (\n  /technology|tech company|ai company|artificial intelligence|developer|startup/.test(text)\n) {\n  template = \"technology\";\n}\nelse if (\n  /salon|beauty|spa|makeup|cosmetic|skincare|hair/.test(text)\n) {\n  template = \"beauty\";\n}\nelse if (\n  /ngo|nonprofit|non-profit|charity|foundation|donation|social impact/.test(text)\n) {\n  template = \"nonprofit\";\n}\n\n// ------------------------------------------------------------\n// TEMPLATE DESIGN SYSTEM\n// ------------------------------------------------------------\n\nconst templateStyles = {\n\n  corporate: {\n    mood: \"Professional, trustworthy and modern\",\n    colors: \"Neutral corporate palette with strong accent color\",\n    typography: \"Clean modern sans-serif\",\n    components: \"Professional cards, statistics, business CTAs\",\n    imageStyle: \"Professional business photography\",\n    spacing: \"Balanced and structured\"\n  },\n\n  saas: {\n    mood: \"Modern, minimal and technology-focused\",\n    colors: \"Clean light/dark palette with subtle gradients\",\n    typography: \"Modern geometric sans-serif\",\n    components: \"Feature cards, pricing cards, product UI\",\n    imageStyle: \"Product screenshots and technology visuals\",\n    spacing: \"Generous modern spacing\"\n  },\n\n  ecommerce: {\n    mood: \"Visual, premium and conversion-focused\",\n    colors: \"Brand-focused commercial palette\",\n    typography: \"Modern readable sans-serif\",\n    components: \"Product cards, filters, offers and CTAs\",\n    imageStyle: \"High-quality product photography\",\n    spacing: \"Clean product-focused layout\"\n  },\n\n  restaurant: {\n    mood: \"Warm, elegant and appetizing\",\n    colors: \"Warm food-inspired palette\",\n    typography: \"Elegant heading font with readable body font\",\n    components: \"Menu cards, food gallery, testimonials\",\n    imageStyle: \"High-quality food and restaurant photography\",\n    spacing: \"Elegant comfortable spacing\"\n  },\n\n  fitness: {\n    mood: \"Energetic, bold and motivational\",\n    colors: \"Strong high-contrast athletic palette\",\n    typography: \"Bold modern typography\",\n    components: \"Training cards, statistics, plans and CTAs\",\n    imageStyle: \"Dynamic fitness photography\",\n    spacing: \"Bold spacious sections\"\n  },\n\n  portfolio: {\n    mood: \"Creative, minimal and visual\",\n    colors: \"Minimal palette with creative accent\",\n    typography: \"Contemporary creative typography\",\n    components: \"Project cards, case studies and skills\",\n    imageStyle: \"Large project and portfolio imagery\",\n    spacing: \"Large visual spacing\"\n  },\n\n  education: {\n    mood: \"Friendly, informative and trustworthy\",\n    colors: \"Fresh educational palette\",\n    typography: \"Readable modern sans-serif\",\n    components: \"Course cards, instructor cards and learning steps\",\n    imageStyle: \"Students, classrooms and learning visuals\",\n    spacing: \"Clear structured spacing\"\n  },\n\n  \"real-estate\": {\n    mood: \"Premium, elegant and trustworthy\",\n    colors: \"Luxury neutral palette\",\n    typography: \"Elegant modern typography\",\n    components: \"Property cards, agents, pricing and inquiry forms\",\n    imageStyle: \"Professional property photography\",\n    spacing: \"Premium spacious layout\"\n  },\n\n  travel: {\n    mood: \"Immersive, adventurous and inspiring\",\n    colors: \"Natural destination-inspired palette\",\n    typography: \"Modern friendly typography\",\n    components: \"Destination cards, packages and galleries\",\n    imageStyle: \"Large destination photography\",\n    spacing: \"Immersive full-width sections\"\n  },\n\n  healthcare: {\n    mood: \"Clean, safe and trustworthy\",\n    colors: \"Clean healthcare-inspired palette\",\n    typography: \"Highly readable sans-serif\",\n    components: \"Service cards, doctor cards and appointment CTA\",\n    imageStyle: \"Professional healthcare photography\",\n    spacing: \"Clean accessible spacing\"\n  },\n\n  event: {\n    mood: \"Exciting, premium and visually engaging\",\n    colors: \"Bold event-focused palette\",\n    typography: \"Modern expressive typography\",\n    components: \"Schedule, speakers, tickets and registration\",\n    imageStyle: \"Event and speaker photography\",\n    spacing: \"Dynamic section spacing\"\n  },\n\n  agency: {\n    mood: \"Creative, premium and modern\",\n    colors: \"Bold creative palette\",\n    typography: \"Modern expressive typography\",\n    components: \"Service cards, portfolio, case studies\",\n    imageStyle: \"Creative campaign visuals\",\n    spacing: \"Modern asymmetric spacing\"\n  },\n\n  technology: {\n    mood: \"Futuristic, clean and innovative\",\n    colors: \"Dark/light technology palette\",\n    typography: \"Modern technical sans-serif\",\n    components: \"Technology cards, features and statistics\",\n    imageStyle: \"Technology and AI visuals\",\n    spacing: \"Clean futuristic spacing\"\n  },\n\n  beauty: {\n    mood: \"Elegant, premium and stylish\",\n    colors: \"Soft luxury palette\",\n    typography: \"Elegant modern typography\",\n    components: \"Service cards, product cards and galleries\",\n    imageStyle: \"Beauty and lifestyle photography\",\n    spacing: \"Soft spacious layout\"\n  },\n\n  nonprofit: {\n    mood: \"Human-centered, trustworthy and impactful\",\n    colors: \"Warm social-impact palette\",\n    typography: \"Friendly readable typography\",\n    components: \"Impact statistics, stories, donations\",\n    imageStyle: \"People and community photography\",\n    spacing: \"Comfortable storytelling layout\"\n  }\n};\n\n// ------------------------------------------------------------\n// 20 SLIDE BLUEPRINT\n// ------------------------------------------------------------\n\nconst slides = [\n\n  {\n    order: 1,\n    id: \"hero\",\n    title: \"Hero\",\n    layout: \"hero\",\n    purpose: \"Immediately communicate the website identity and main value proposition\",\n    contentType: \"headline, supporting text and primary CTA\",\n    components: [\"navigation\", \"hero headline\", \"CTA\", \"hero visual\"],\n    imageRequired: true\n  },\n\n  {\n    order: 2,\n    id: \"intro\",\n    title: \"Introduction / Trust\",\n    layout: \"centered-intro\",\n    purpose: \"Introduce the brand and establish trust\",\n    contentType: \"introductory content\",\n    components: [\"trust indicators\", \"intro text\"],\n    imageRequired: false\n  },\n\n  {\n    order: 3,\n    id: \"about\",\n    title: \"About\",\n    layout: \"two-column\",\n    purpose: \"Explain who the organization or business is\",\n    contentType: \"about content\",\n    components: [\"heading\", \"description\", \"supporting visual\"],\n    imageRequired: true\n  },\n\n  {\n    order: 4,\n    id: \"story\",\n    title: \"Story / Problem\",\n    layout: \"image-text\",\n    purpose: \"Explain the story, problem or customer need\",\n    contentType: \"storytelling\",\n    components: [\"story content\", \"visual\"],\n    imageRequired: true\n  },\n\n  {\n    order: 5,\n    id: \"services\",\n    title: \"Services / Products\",\n    layout: \"card-grid\",\n    purpose: \"Present the main services or products\",\n    contentType: \"cards\",\n    components: [\"service/product cards\"],\n    imageRequired: true\n  },\n\n  {\n    order: 6,\n    id: \"featured\",\n    title: \"Featured\",\n    layout: \"feature-grid\",\n    purpose: \"Highlight the most important offerings\",\n    contentType: \"featured content\",\n    components: [\"featured cards\", \"CTA\"],\n    imageRequired: true\n  },\n\n  {\n    order: 7,\n    id: \"benefits\",\n    title: \"Benefits / Features\",\n    layout: \"feature-grid\",\n    purpose: \"Explain key benefits or features\",\n    contentType: \"feature list\",\n    components: [\"feature cards\", \"icons\"],\n    imageRequired: false\n  },\n\n  {\n    order: 8,\n    id: \"process\",\n    title: \"Process / How It Works\",\n    layout: \"process\",\n    purpose: \"Explain how the product or service works\",\n    contentType: \"step-by-step process\",\n    components: [\"process steps\", \"icons\"],\n    imageRequired: false\n  },\n\n  {\n    order: 9,\n    id: \"showcase\",\n    title: \"Showcase / Gallery\",\n    layout: \"gallery\",\n    purpose: \"Provide strong visual proof\",\n    contentType: \"gallery\",\n    components: [\"image gallery\", \"captions\"],\n    imageRequired: true\n  },\n\n  {\n    order: 10,\n    id: \"highlights\",\n    title: \"Stats / Highlights\",\n    layout: \"stats\",\n    purpose: \"Present important measurable highlights\",\n    contentType: \"statistics\",\n    components: [\"stat cards\"],\n    imageRequired: false\n  },\n\n  {\n    order: 11,\n    id: \"team\",\n    title: \"Team\",\n    layout: \"team-grid\",\n    purpose: \"Introduce important people or team members\",\n    contentType: \"team profiles\",\n    components: [\"team cards\"],\n    imageRequired: true\n  },\n\n  {\n    order: 12,\n    id: \"testimonials\",\n    title: \"Testimonials\",\n    layout: \"testimonial\",\n    purpose: \"Build trust using customer feedback\",\n    contentType: \"testimonials\",\n    components: [\"testimonial cards\"],\n    imageRequired: false\n  },\n\n  {\n    order: 13,\n    id: \"case-studies\",\n    title: \"Case Studies / Results\",\n    layout: \"case-study\",\n    purpose: \"Show successful work, projects or results\",\n    contentType: \"case studies\",\n    components: [\"case study cards\", \"results\"],\n    imageRequired: true\n  },\n\n  {\n    order: 14,\n    id: \"pricing\",\n    title: \"Pricing / Packages\",\n    layout: \"pricing\",\n    purpose: \"Present pricing, plans or packages when relevant\",\n    contentType: \"pricing\",\n    components: [\"pricing cards\", \"CTA\"],\n    imageRequired: false\n  },\n\n  {\n    order: 15,\n    id: \"difference\",\n    title: \"Special Offer / Key Difference\",\n    layout: \"split-cta\",\n    purpose: \"Highlight the strongest differentiator or special offer\",\n    contentType: \"USP / offer\",\n    components: [\"highlight\", \"CTA\"],\n    imageRequired: true\n  },\n\n  {\n    order: 16,\n    id: \"faq\",\n    title: \"FAQ\",\n    layout: \"faq\",\n    purpose: \"Answer common customer questions\",\n    contentType: \"questions and answers\",\n    components: [\"FAQ accordion\"],\n    imageRequired: false\n  },\n\n  {\n    order: 17,\n    id: \"location\",\n    title: \"Location / Contact Information\",\n    layout: \"map-contact\",\n    purpose: \"Provide location and important contact details\",\n    contentType: \"contact information\",\n    components: [\"location\", \"contact details\"],\n    imageRequired: false\n  },\n\n  {\n    order: 18,\n    id: \"community\",\n    title: \"Community / Newsletter\",\n    layout: \"newsletter\",\n    purpose: \"Encourage engagement and ongoing connection\",\n    contentType: \"newsletter / social proof\",\n    components: [\"newsletter form\", \"social links\"],\n    imageRequired: false\n  },\n\n  {\n    order: 19,\n    id: \"final-cta\",\n    title: \"Final CTA\",\n    layout: \"cta\",\n    purpose: \"Create a strong final conversion opportunity\",\n    contentType: \"CTA\",\n    components: [\"headline\", \"CTA button\"],\n    imageRequired: false\n  },\n\n  {\n    order: 20,\n    id: \"contact\",\n    title: \"Contact\",\n    layout: \"contact-form\",\n    purpose: \"Allow users to contact or submit an inquiry\",\n    contentType: \"contact form\",\n    components: [\"contact form\", \"email\", \"phone\", \"address\"],\n    imageRequired: false\n  }\n];\n\n// ------------------------------------------------------------\n// TEMPLATE-SPECIFIC ADJUSTMENTS\n// ------------------------------------------------------------\n\nconst templateAdjustments = {\n\n  restaurant: {\n    5: \"Menu / Food Categories\",\n    6: \"Chef Specials / Featured Dishes\",\n    8: \"Ordering / Dining Process\",\n    9: \"Food Gallery\",\n    14: \"Menu Packages / Combos\",\n    17: \"Restaurant Location / Opening Information\"\n  },\n\n  ecommerce: {\n    5: \"Product Categories\",\n    6: \"Featured Products\",\n    8: \"Shopping Process\",\n    9: \"Product Gallery\",\n    14: \"Pricing / Offers\",\n    17: \"Shipping / Store Information\"\n  },\n\n  saas: {\n    5: \"Core Features\",\n    6: \"Featured Product Features\",\n    8: \"How the Platform Works\",\n    9: \"Product Screenshots\",\n    13: \"Customer Case Studies\",\n    14: \"Subscription Plans\",\n    17: \"Support / Contact\"\n  },\n\n  portfolio: {\n    5: \"Skills / Services\",\n    6: \"Featured Projects\",\n    8: \"My Workflow\",\n    9: \"Portfolio Gallery\",\n    13: \"Project Case Studies\",\n    14: \"Services / Packages\",\n    17: \"Contact / Availability\"\n  },\n\n  education: {\n    5: \"Courses / Programs\",\n    6: \"Featured Courses\",\n    8: \"Learning Process\",\n    9: \"Campus / Learning Gallery\",\n    13: \"Student Success Stories\",\n    14: \"Course Plans / Fees\",\n    17: \"Enrollment Information\"\n  },\n\n  \"real-estate\": {\n    5: \"Property Listings\",\n    6: \"Featured Properties\",\n    8: \"Property Buying Process\",\n    9: \"Property Gallery\",\n    13: \"Property Case Studies\",\n    14: \"Property Pricing\",\n    17: \"Property Location / Inquiry\"\n  },\n\n  travel: {\n    5: \"Travel Packages\",\n    6: \"Featured Destinations\",\n    8: \"Travel Planning Process\",\n    9: \"Destination Gallery\",\n    13: \"Travel Experiences\",\n    14: \"Travel Packages / Pricing\",\n    17: \"Destination / Booking Information\"\n  },\n\n  healthcare: {\n    5: \"Medical Services\",\n    6: \"Featured Departments\",\n    8: \"Patient Process\",\n    9: \"Facilities Gallery\",\n    13: \"Healthcare Success Stories\",\n    14: \"Healthcare Plans\",\n    17: \"Clinic / Hospital Information\"\n  },\n\n  event: {\n    5: \"Event Highlights\",\n    6: \"Featured Speakers\",\n    8: \"Event Schedule\",\n    9: \"Event Gallery\",\n    13: \"Previous Event Results\",\n    14: \"Tickets / Packages\",\n    17: \"Venue Information\"\n  },\n\n  beauty: {\n    5: \"Beauty Services\",\n    6: \"Featured Treatments\",\n    8: \"Appointment Process\",\n    9: \"Beauty Gallery\",\n    13: \"Customer Transformations\",\n    14: \"Treatment Packages\",\n    17: \"Salon / Spa Information\"\n  }\n};\n\n// Apply template-specific titles\nif (templateAdjustments[template]) {\n\n  for (const [order, title] of Object.entries(templateAdjustments[template])) {\n\n    const slide = slides.find(\n      s => s.order === Number(order)\n    );\n\n    if (slide) {\n      slide.title = title;\n    }\n  }\n}\n\n// ------------------------------------------------------------\n// LAYOUT VARIETY\n// ------------------------------------------------------------\n\nconst layouts = [\n  \"hero\",\n  \"centered-intro\",\n  \"two-column\",\n  \"image-text\",\n  \"card-grid\",\n  \"feature-grid\",\n  \"service-grid\",\n  \"process\",\n  \"gallery\",\n  \"stats\",\n  \"team-grid\",\n  \"testimonial\",\n  \"case-study\",\n  \"pricing\",\n  \"split-cta\",\n  \"faq\",\n  \"map-contact\",\n  \"newsletter\",\n  \"cta\",\n  \"contact-form\"\n];\n\n// Prevent excessive repeated layouts\nconst layoutCount = {};\n\nslides.forEach((slide, index) => {\n\n  let selectedLayout = slide.layout;\n\n  layoutCount[selectedLayout] =\n    (layoutCount[selectedLayout] || 0) + 1;\n\n  if (layoutCount[selectedLayout] > 3) {\n\n    const alternative =\n      layouts.find(\n        l => (layoutCount[l] || 0) < 3\n      );\n\n    if (alternative) {\n\n      slide.layout = alternative;\n\n      layoutCount[alternative] =\n        (layoutCount[alternative] || 0) + 1;\n    }\n  }\n});\n\n// ------------------------------------------------------------\n// ADD CONTENT REQUIREMENTS\n// ------------------------------------------------------------\n\nslides.forEach(slide => {\n\n  slide.contentRequirements = [\n    `Create content appropriate for the ${template} website`,\n    `Keep content relevant to the ${slide.title}`,\n    \"Use only factual information supplied by the user\",\n    \"Do not invent business facts\"\n  ];\n\n  slide.visualRequirements =\n    slide.imageRequired\n      ? [\n          `Create a visual concept suitable for ${slide.title}`,\n          `Use imagery appropriate for a ${template} website`\n        ]\n      : [];\n\n  slide.cta =\n    [\n      1,\n      6,\n      15,\n      19,\n      20\n    ].includes(slide.order)\n      ? \"Use an appropriate primary or secondary CTA\"\n      : \"\";\n});\n\n// ------------------------------------------------------------\n// FINAL UI PLAN\n// ------------------------------------------------------------\n\nconst style = templateStyles[template];\n\nconst result = {\n\n  template,\n\n  websiteStyle: {\n    mood: style.mood,\n    colors: style.colors,\n    typography: style.typography,\n    components: style.components,\n    imageStyle: style.imageStyle,\n    spacing: style.spacing\n  },\n\n  navigation: {\n    style: \"Sticky responsive navigation\",\n    primaryCTA: slides[0].cta || \"Get Started\",\n    mobileBehavior: \"Responsive hamburger navigation\"\n  },\n\n  responsiveDesign: {\n    desktop: true,\n    tablet: true,\n    mobile: true,\n    mobileLayout: \"Stack multi-column layouts vertically\"\n  },\n\n  accessibility: {\n    readableTypography: true,\n    clearHeadings: true,\n    accessibleButtons: true,\n    formLabels: true,\n    imageDescriptions: true\n  },\n\n  sectionCount: 20,\n\n  sections: slides,\n\n  validation: {\n    exactly20Slides: slides.length === 20,\n    uniqueIds:\n      new Set(slides.map(s => s.id)).size === 20,\n    firstSectionIsHero:\n      slides[0].id === \"hero\",\n    lastSectionIsContact:\n      slides[19].id === \"contact\"\n  },\n\n  userRequirement\n};\n\n// ------------------------------------------------------------\n// OUTPUT\n// ------------------------------------------------------------\n\nreturn [\n  {\n    json: result\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        112
+      ],
+      "id": "d2670cef-c81d-4314-b4fd-9159eaefe1cd",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        608,
+        336
+      ],
+      "id": "0a5962b0-1e19-4bdd-9676-b5c6c65acaf7",
+      "name": "Groq Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Intake Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intake Agent": {
+      "main": [
+        [
+          {
+            "node": "Spec Writer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spec Writer Agent": {
+      "main": [
+        [
+          {
+            "node": "UI Planner Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UI Planner Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Writer Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Keyword Agent": {
+      "main": [
+        [
+          {
+            "node": "Split image keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Images": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split image keywords": {
+      "main": [
+        [
+          {
+            "node": "Fetch Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Image Keyword Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Assemble Site Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Site Code": {
+      "main": [
+        [
+          {
+            "node": "Git Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Git Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a file": {
+      "main": [
+        [
+          {
+            "node": "Create Vercel Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Vercel Project": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Post": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert documents": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Insert documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "'Normalize Trigger Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "'Normalize Trigger Input": {
+      "main": [
+        [
+          {
+            "node": "Git Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Create a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intake Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Spec Writer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "UI Planner Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content Writer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Content Writer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Keyword Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "eeacd5f3-c437-4e18-812c-00046d0154fa",
+  "meta": {
+    "instanceId": "8d9c83193a406608da608478c07a54e791c454b96ff6f02524766654b514618e"
+  },
+  "nodeGroups": [],
+  "id": "mWDmbjtBQI3OFQyG",
+  "tags": []
+}
